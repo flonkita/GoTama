@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/utils/supabase';
 import Auth from '@/components/Auth';
-import HabitList from '@/components/HabitList'; // On va le créer juste après !
+// import HabitList from '@/components/HabitList'; // On va le créer juste après !
 
 export default function HomeScreen() {
   const [session, setSession] = useState<Session | null>(null);
