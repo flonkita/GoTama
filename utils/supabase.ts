@@ -4,8 +4,8 @@ import { createClient } from "@supabase/supabase-js";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Infos for Supabase initialization
-const supabaseUrl = process.env.URL_SUPABASE as string;
-const supabaseAnonKey = process.env.ANON_KEY as string;
+const supabaseUrl = process.env.SUPABASE_URL as string;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY as string;
 
 // Create a single Supabase client for interacting with your database
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
