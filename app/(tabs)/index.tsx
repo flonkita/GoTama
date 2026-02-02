@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, ActivityIndicator, TextInput, Button } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/utils/supabase';
 import Auth from '@/components/Auth';
@@ -16,6 +16,7 @@ export default function HomeScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [newUsername, setNewUsername] = useState('');
 
   useEffect(() => {
     // 1. Vérifier s'il y a déjà une session au démarrage
@@ -53,6 +54,31 @@ export default function HomeScreen() {
     }
   }
 
+  // Fonction pour créer le profil utilisateur
+  async function saveProfile() {
+    if (!session?.user) return;
+    if (newUsername.trim() === "") return; // On empêche les pseudos vides
+
+    const updates = {
+      username: newUsername,
+      // Petit bonus : On génère un avatar auto basé sur le pseudo
+      avatar_url: `https://api.dicebear.com/9.x/pixel-art/svg?seed=${newUsername}`,
+      // updated_at: new Date(),
+    };
+
+    const { error } = await supabase
+      .from('users')
+      .update(updates)             // <--- C'est ici que la magie opère (UPDATE et non INSERT)
+      .eq('id', session.user.id);  // On cible NOTRE ligne
+
+    if (error) {
+      console.error("Erreur mise à jour:", error);
+    } else {
+      // On recharge le profil pour afficher le résultat tout de suite
+      getProfile(session.user.id);
+    }
+  }
+
   if (loading) {
     return <ActivityIndicator size="large" color="#0000ff" style={styles.loading} />;
   }
@@ -60,11 +86,29 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       {session && session.user ? (
-        // Si connecté : On affiche le jeu (pour l'instant un texte, bientôt la liste)
-        <View>
-             <Text style={styles.welcome}>Salut, {profile?.username || 'Joueur' } ! 🎮</Text>
-             {/* <HabitList userId={session.user.id} />  <-- Ce sera notre prochaine étape */}
-        </View>
+        <>
+          {/* CAS 1 : Le profil est vide (pas de username) -> CRÉATION DE PERSO */}
+          {!profile?.username ? (
+            <View style={styles.formContainer}>
+              <Text style={styles.title}>Choisis ton nom de Héros 🛡️</Text>
+              <TextInput
+                style={styles.input}
+                onChangeText={setNewUsername}
+                value={newUsername}
+                placeholder="Ex: Aragorn du 33"
+              />
+              <Button title="Valider mon personnage" onPress={saveProfile} />
+            </View>
+          ) : (
+            /* CAS 2 : Le profil est complet -> JEU */
+            <View style={styles.formContainer}>
+              <Text style={styles.welcome}>Salut, {profile.username} ! 🎮</Text>
+              <Text>XP actuelle : {profile.xp} points</Text>
+              {/* Petite image pour voir l'avatar généré */}
+              {/* <Image source={{ uri: profile.avatar_url }} style={{ width: 100, height: 100 }} /> */}
+            </View>
+          )}
+        </>
       ) : (
         // Sinon : On affiche le Login
         <Auth />
@@ -88,5 +132,23 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-  }
+  },
+  formContainer: {
+    width: '80%',
+    gap: 20, // Espace les éléments
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: '#fff',
+    marginBottom: 10,
+  },
 });
