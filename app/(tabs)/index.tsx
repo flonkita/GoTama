@@ -5,24 +5,53 @@ import { supabase } from '@/utils/supabase';
 import Auth from '@/components/Auth';
 // import HabitList from '@/components/HabitList'; // On va le créer juste après !
 
+interface UserProfile {
+  avatar_url: string;
+  username: string;
+  xp: number;
+  // Ajoutez d'autres champs de profil si nécessaire
+}
+
 export default function HomeScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     // 1. Vérifier s'il y a déjà une session au démarrage
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      // Si on a une session, on va chercher le profil du joueur !
+      if (session) {
+        getProfile(session.user.id);
+      }
       setLoading(false);
     });
 
     // 2. Écouter les changements (connexion / déconnexion)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session) {
+        getProfile(session.user.id);
+      }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Fonction pour récupérer le profil utilisateur
+  async function getProfile(userId: string) {
+    const { data, error } = await supabase
+    .from('users') // On cherche dans la table users
+    .select('*') // On prends tous les champs
+    .eq('id', userId) // Pour l'utilisateur courant
+    .single(); // On s'attend à un seul résultat
+
+    if (data) {
+      setProfile(data); // On stocke le profil dans le state
+    }
+  }
 
   if (loading) {
     return <ActivityIndicator size="large" color="#0000ff" style={styles.loading} />;
@@ -33,7 +62,7 @@ export default function HomeScreen() {
       {session && session.user ? (
         // Si connecté : On affiche le jeu (pour l'instant un texte, bientôt la liste)
         <View>
-             <Text style={styles.welcome}>Salut, Joueur ! 🎮</Text>
+             <Text style={styles.welcome}>Salut, {profile?.username || 'Joueur' } ! 🎮</Text>
              {/* <HabitList userId={session.user.id} />  <-- Ce sera notre prochaine étape */}
         </View>
       ) : (
