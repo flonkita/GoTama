@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, ActivityIndicator, TextInput, Button } from 're
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/utils/supabase';
 import Auth from '@/components/Auth';
-// import HabitList from '@/components/HabitList'; // On va le créer juste après !
+import HabitList from '@/components/HabitList'; // On va le créer juste après !
 
 interface UserProfile {
   avatar_url: string;
@@ -106,6 +106,7 @@ export default function HomeScreen() {
               <Text>XP actuelle : {profile.xp} points</Text>
               {/* Petite image pour voir l'avatar généré */}
               {/* <Image source={{ uri: profile.avatar_url }} style={{ width: 100, height: 100 }} /> */}
+              <HabitList userId={session.user.id} />
             </View>
           )}
         </>
