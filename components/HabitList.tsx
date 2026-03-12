@@ -1,5 +1,7 @@
 import { supabase } from "@/utils/supabase";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import ConfettiCannon from "react-native-confetti-cannon";
+
 import { Button, FlatList, StyleSheet, Text, View } from "react-native";
 
 interface Habit {
@@ -12,6 +14,7 @@ interface Habit {
 
 export default function HabitList({userId}: {userId: string}) {
     const [habits, setHabits] = useState<Habit[]>([]);
+    const [isExploding, setIsExploding] = useState(false);
 
     useEffect(() => {
         fetchHabits();
@@ -37,6 +40,17 @@ export default function HabitList({userId}: {userId: string}) {
 
     // Fonction pour incrémenter le compteur d'une habitude
     async function incrementCountHabit(habitId: string) {
+        const habit = habits.find(h => h.id === habitId);
+        if (!habit) return;
+
+        // Sécurité : Si c'est déjà fini, on ne fait rien
+        if (habit.count >= habit.target) return;
+
+        // 🎉 TA LOGIQUE ICI : On vérifie si ce clic nous fait gagner
+        if ((habit.count + 1) >= habit.target) {
+            setIsExploding(true); // On déclenche les confettis
+        }
+
         // 1. ✨ Optimistic UI : On met à jour l'affichage INSTANTANÉMENT
         // L'utilisateur a l'impression que c'est ultra rapide
         setHabits(prevHabits =>
@@ -62,6 +76,8 @@ export default function HabitList({userId}: {userId: string}) {
             // Ici, tu pourrais ajouter un petit Toast d'erreur
             // toast.error("Erreur de connexion, réessayez !");
         }
+
+        
     }
 
     return (
@@ -84,9 +100,19 @@ export default function HabitList({userId}: {userId: string}) {
                             </View>
                             {/* On ajoutera les boutons + ici plus tard */}
                             <Button title="+1" onPress={() => incrementCountHabit(item.id)} />
+                            {isExploding && (
+                                <ConfettiCannon
+                                    count={200}
+                                    origin={{ x: -30, y: 0 }}
+                                    autoStart={true} // ✅ Il tire dès qu'il apparaît
+                                    fadeOut={true}
+                                    onAnimationEnd={() => setIsExploding(false)} // 🧹 Une fois fini, on éteint l'interrupteur !
+                                />
+                            )}
                         </View>
                     )}
                 />
+                
             )}
         </View>
     );
